@@ -15,6 +15,7 @@ def runtext(request):
         width, height = 100, 100
         fps = 24
         duration = 3
+        video_frames = fps*duration
 
         out = cv2.VideoWriter(path, cv2.VideoWriter.fourcc(*'mp4v'), fps, (width, height))
         frame = numpy.zeros((height, width, 3), dtype=numpy.uint8)
@@ -25,9 +26,21 @@ def runtext(request):
         font_thickness = 2
         font_color = (255, 255, 255)
 
-        for t in range(duration * fps):
+        message_width = cv2.getTextSize(message, font, font_scale, font_thickness)[0][0]
+        if message_width >= video_frames:
+          if math.ceil(message_width/video_frames) - message_width/video_frames < 0.5:
+            speed = math.ceil(message_width/video_frames)+1
+          else:
+            speed = math.ceil(message_width/video_frames)
+        else:
+          if 1 - message_width/video_frames < 0.5:
+            speed = 2
+          else:
+            speed = 1
+        
+        for t in range(video_frames):
             frame.fill(0)
-            x -= len(message) // duration
+            x -= speed + 1
             cv2.putText(frame, message, (x, y), font, font_scale, font_color, font_thickness)
             out.write(frame)
         out.release()
